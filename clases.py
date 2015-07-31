@@ -6,6 +6,12 @@ class punto:
 	def __init__(self,x,y):
 		self.x = x
 		self.y = y
+	def __add__(self,other):
+		return punto(self.x + other.x, self.y + other.y)
+	def __neg__(self):
+		return punto(-self.x,-self.y)
+	def __sub__(self,other):
+		return self + (-other)
 	def __getitem__(self,n):
 		if n == 0:
 			return self.x
