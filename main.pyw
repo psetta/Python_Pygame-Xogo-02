@@ -3,6 +3,7 @@
 import pygame
 from pygame.locals import *
 from clases import *
+from colisions import *
 
 #CONSTANTES
 
@@ -39,7 +40,7 @@ NUMERO_CADROS_TOTALES_XOGO = NUMERO_CADROS_ANCHO_XOGO*NUMERO_CADROS_ALTO_XOGO
 ANCHO_PJ = ANCHO_CADRO * 4
 ALTO_PJ = ALTO_CADRO * 5
 
-VELOCIDADE_PJ = 3
+VELOCIDADE_PJ = ANCHO_CADRO / 1.5
 
 LISTA_CADROS = []
 
@@ -92,6 +93,9 @@ def crear_cadro_redores(pos,color=[0,0,0],borrar=False):
 			cadro = crear_cadro(pos+i,[0,0,0,0])
 		lista_salida.append(cadro)
 	return lista_salida
+
+def colision_pj_cadros_f(pj_punto,lista_cadros):
+	colision_pj_cadro(pj_punto,lista_cadros,ANCHO_PJ,ALTO_PJ,MARCO_VENTANA_LATERAL,MARCO_VENTANA_VERTICAL)
 
 #CREAR SURFACE COS CADROS
 
@@ -171,13 +175,7 @@ while ON:
 	#DEBUXAR CADROS
 	
 	ventana.blit(superficie_cadros,(MARCO_VENTANA_LATERAL-punto_camara.x,MARCO_VENTANA_VERTICAL-punto_camara.y))
-	
-	'''
-	for i in LISTA_CADROS:
-		if i:
-			rectangulo = pygame.Rect(i.rect.left-punto_camara.x,i.rect.top-punto_camara.y,i.rect.width,i.rect.height)
-			pygame.draw.rect(ventana,i.color,rectangulo)
-	'''
+
 	#DEBUXAR CADRO-FONDO-REFERENCIA
 	
 	if ANCHO_VENTANA == ANCHO_XOGO:
@@ -223,36 +221,105 @@ while ON:
 	ventana.blit(marco_vertical,(0,0))
 	ventana.blit(marco_vertical,(0,ALTO_VENTANA-MARCO_VENTANA_VERTICAL))
 	
+	#DEBUXAR CADROS CHOQUES
+	
+	'''
+	lista_indices_superiores = []
+	
+	puntos_indices = pos_superiores(pj.punto)
+	
+	'''
+	'''
+	for i in puntos_indices:
+		rect_choque = pygame.Rect(i.x*ANCHO_CADRO+MARCO_VENTANA_LATERAL-punto_camara.x,i.y*ALTO_CADRO+MARCO_VENTANA_VERTICAL-punto_camara.y,ANCHO_CADRO,ALTO_CADRO)
+		pygame.draw.rect(ventana,[255,0,0],rect_choque,1)
+	'''
+	'''
+	
+	for i in puntos_indices:
+		indice_superior = posicion_a_indice(i)
+		if LISTA_CADROS[indice_superior]:
+			lista_indices_superiores.append(indice_superior)
+	
+	for i in lista_indices_superiores:
+		rect = pygame.Rect(LISTA_CADROS[i].rect.left+MARCO_VENTANA_LATERAL-punto_camara.x, LISTA_CADROS[i].rect.top+MARCO_VENTANA_VERTICAL-punto_camara.y,ANCHO_CADRO,ALTO_CADRO)
+		pygame.draw.rect(ventana,[255,0,0],rect,1)
 		
+	dist_cadro_superior = distancia_bloque_superior(pj.punto,lista_indices_superiores)
+	'''
+	
 	#MOVEMENTO DE PJ-PUNTO
+	
+	lista_mov = []
 	
 	tecla_pulsada = pygame.key.get_pressed()
 	
-	punto_futuro = punto(pj.punto.x,pj.punto.y)
+	punto_destino = punto(pj.punto.x,pj.punto.y)
 	
 	if tecla_pulsada[K_UP] or tecla_pulsada[K_w]:
-		punto_futuro.y -= VELOCIDADE_PJ
+		punto_destino.y -= VELOCIDADE_PJ
+		lista_mov.append("arriba")
 		
 	if tecla_pulsada[K_DOWN] or tecla_pulsada[K_s]:
-		punto_futuro.y  += VELOCIDADE_PJ
+		punto_destino.y  += VELOCIDADE_PJ
+		lista_mov.append("abaixo")
 		
 	if tecla_pulsada[K_RIGHT] or tecla_pulsada[K_d]:
-		punto_futuro.x += VELOCIDADE_PJ
+		punto_destino.x += VELOCIDADE_PJ
+		lista_mov.append("dereita")
 		
 	if tecla_pulsada[K_LEFT] or tecla_pulsada[K_a]:
-		punto_futuro.x -= VELOCIDADE_PJ
+		punto_destino.x -= VELOCIDADE_PJ
+		lista_mov.append("esquerda")
+		
+	if "arriba" in lista_mov and "abaixo" in lista_mov:
+		lista_mov.remove("arriba")
+		lista_mov.remove("abaixo")
+	if "dereita" in lista_mov and "esquerda" in lista_mov:
+		lista_mov.remove("dereita")
+		lista_mov.remove("esquerda")
 		
 	#MOVEMENTO CON VECTOR
 	
 	vector_pj = vector(pj.punto.x,pj.punto.y)
-	vector_pj_futuro = vector(punto_futuro.x,punto_futuro.y)
+	vector_pj_destino = vector(punto_destino.x,punto_destino.y)
 	
-	vector_dir = vector_pj_futuro - vector_pj
+	vector_dir = vector_pj_destino - vector_pj
+	
+	pj_punto_futuro = punto(pj.punto.x,pj.punto.y)
 	
 	if abs(vector_dir.x) > 0 or abs(vector_dir.y) > 0:
 		vector_final = vector_pj + vector_dir * VELOCIDADE_PJ / vector_dir.longitude()
-		pj.punto = punto(vector_final.x,vector_final.y)
+		pj_punto_futuro = punto(vector_final.x,vector_final.y)
+		
+	#COLISIONS PJ - BLOQUES
 	
+	lista_cadros_superiores_pj = []
+	lista_cadros_inferiores_pj = []
+	lista_cadros_esquerda_pj = []
+	lista_cadros_dereita_pj = []
+	
+	if "arriba" in lista_mov:
+		lista_cadros_superiores_pj =  lista_cadros_superiores(pj.punto,MARCO_VENTANA_LATERAL,MARCO_VENTANA_VERTICAL,ANCHO_CADRO,ALTO_CADRO,ANCHO_PJ,NUMERO_CADROS_ANCHO_XOGO,LISTA_CADROS)
+	
+	lista_cadros_cercanos = lista_cadros_superiores_pj + lista_cadros_inferiores_pj + lista_cadros_esquerda_pj + lista_cadros_dereita_pj
+	
+	cont_recta_vel = 0
+		
+	while colision_pj_cadro(pj_punto_futuro,lista_cadros_cercanos,ANCHO_PJ,ALTO_PJ,MARCO_VENTANA_LATERAL,MARCO_VENTANA_VERTICAL):
+		cont_recta_vel += 1
+		if cont_recta_vel >= VELOCIDADE_PJ:
+			pj_punto_futuro = pj.punto
+			break
+		elif len(lista_mov) > 1:
+			vector_final = vector_pj + vector_dir * (VELOCIDADE_PJ-cont_recta_vel) / vector_dir.longitude()
+			pj_punto_futuro = punto(vector_final.x,vector_final.y)
+		else:
+			vector_final = vector_pj + vector_dir * (VELOCIDADE_PJ-cont_recta_vel) / vector_dir.longitude()
+			pj_punto_futuro = punto(vector_final.x,vector_final.y)
+		
+	pj.punto = punto(pj_punto_futuro.x,pj_punto_futuro.y)
+
 	#REAXUSTE DO PUNTO
 	
 	pj.punto.x = min(ANCHO_XOGO-(ANCHO_PJ+MARCO_VENTANA_LATERAL),pj.punto.x)

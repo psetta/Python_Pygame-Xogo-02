@@ -19,6 +19,7 @@ class punto:
 			return self.y
 		else:
 			raise IndexError(n)
+			
 
 class vector:
 	def __init__(self,x,y):
