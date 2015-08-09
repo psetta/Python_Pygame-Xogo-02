@@ -5,6 +5,13 @@ from pygame.locals import *
 from clases import *
 from colisions import *
 
+import ctypes
+import os
+import sys
+
+if os.name == 'nt' and sys.getwindowsversion()[0] >= 6:
+    ctypes.windll.user32.SetProcessDPIAware()
+
 #CONSTANTES
 
 ANCHO_XOGO = 800
