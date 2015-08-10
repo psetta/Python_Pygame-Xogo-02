@@ -4,6 +4,8 @@ import pygame
 from pygame.locals import *
 from clases import *
 from colisions import *
+from constantes import *
+
 
 import ctypes
 import os
@@ -11,48 +13,6 @@ import sys
 
 if os.name == 'nt' and sys.getwindowsversion()[0] >= 6:
     ctypes.windll.user32.SetProcessDPIAware()
-
-#CONSTANTES
-
-ANCHO_XOGO = 800
-ALTO_XOGO = 600
-
-ANCHO_VENTANA_INICIAL = 500
-ALTO_VENTANA_INICIAL = 400
-
-ANCHO_VENTANA = ANCHO_VENTANA_INICIAL
-ALTO_VENTANA = ALTO_VENTANA_INICIAL
-
-NUMERO_CADROS_ANCHO = 100
-NUMERO_CADROS_ALTO = 100
-
-ANCHO_CADRO = ANCHO_VENTANA / NUMERO_CADROS_ANCHO
-ALTO_CADRO = ALTO_VENTANA / NUMERO_CADROS_ALTO
-
-MARCO_VENTANA_LATERAL = ANCHO_CADRO * 5
-MARCO_VENTANA_VERTICAL = ALTO_CADRO * 2
-
-ANCHO_VENTANA_REAL = ANCHO_VENTANA - MARCO_VENTANA_LATERAL*2
-ALTO_VENTANA_REAL = ALTO_VENTANA - MARCO_VENTANA_VERTICAL*2	
-
-ANCHO_XOGO_REAL = ANCHO_XOGO - MARCO_VENTANA_LATERAL*2
-ALTO_XOGO_REAL = ALTO_XOGO - MARCO_VENTANA_VERTICAL*2
-
-NUMERO_CADROS_ANCHO_XOGO = int(ANCHO_XOGO_REAL / ANCHO_CADRO)
-NUMERO_CADROS_ALTO_XOGO = int(ALTO_XOGO_REAL / ALTO_CADRO)
-
-NUMERO_CADROS_TOTALES_VENTANA = NUMERO_CADROS_ANCHO*NUMERO_CADROS_ALTO
-NUMERO_CADROS_TOTALES_XOGO = NUMERO_CADROS_ANCHO_XOGO*NUMERO_CADROS_ALTO_XOGO
-
-ANCHO_PJ = ANCHO_CADRO * 4
-ALTO_PJ = ALTO_CADRO * 5
-
-VELOCIDADE_PJ = ANCHO_CADRO / 1.5
-
-LISTA_CADROS = []
-
-for i in range(NUMERO_CADROS_TOTALES_XOGO):
-	LISTA_CADROS.append(0)
 	
 #FUNCIONS
 
@@ -150,6 +110,18 @@ ventana = pygame.display.set_mode([ANCHO_VENTANA, ALTO_VENTANA])
 
 pygame.display.set_caption("Conceptos_2")
 
+#IMAGENES
+
+#PJ
+
+if os.access("abaixo0.png",0):
+	imagen_pj = pygame.image.load("abaixo0.png").convert_alpha()
+else:
+	image_pj = False
+	
+#imagen_pj = pygame.transform.smoothscale(imagen_pj,(int(ANCHO_PJ*1.2),int(ALTO_PJ*1.2)))
+imagen_pj = pygame.transform.scale(imagen_pj,(int(ANCHO_PJ*1.5),int(ALTO_PJ*1.5)))
+
 #FONT
 
 font_1 = pygame.font.SysFont("System", ANCHO_VENTANA/25)
@@ -198,8 +170,15 @@ while ON:
 	
 	#DEBUXAR PJ
 	
-	pj_rect = pygame.Rect(pj.punto_ventana.x,pj.punto_ventana.y,ANCHO_PJ,ALTO_PJ)
-	pygame.draw.rect(ventana,[0,0,0],pj_rect)
+	if punto_pj:
+		if cadricula:
+			pj_rect = pygame.Rect(pj.punto_ventana.x,pj.punto_ventana.y,ANCHO_PJ,ALTO_PJ)
+			pygame.draw.rect(ventana,[255,0,0],pj_rect)
+		ventana.blit(imagen_pj,(pj.punto_ventana.x-(imagen_pj.get_width()-ANCHO_PJ)/2,pj.punto_ventana.y-(imagen_pj.get_height()-ALTO_PJ)/2))
+		#ventana.blit(imagen_pj,(pj.punto_ventana.x,pj.punto_ventana.y))
+	else:
+		pj_rect = pygame.Rect(pj.punto_ventana.x,pj.punto_ventana.y,ANCHO_PJ,ALTO_PJ)
+		pygame.draw.rect(ventana,[0,0,0],pj_rect)
 	
 	#DEBUXAR CUADRICULA
 	

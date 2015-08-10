@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from clases import *
+from constantes import *
 
 #FUNCIONS PARA COLISIONS
 
