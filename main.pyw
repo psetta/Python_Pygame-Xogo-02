@@ -2,9 +2,9 @@
 
 import pygame
 from pygame.locals import *
-from clases import *
-from colisions import *
-from constantes import *
+from modulos.clases import *
+from modulos.funcions import *
+from modulos.constantes import *
 
 
 import ctypes
@@ -13,56 +13,6 @@ import sys
 
 if os.name == 'nt' and sys.getwindowsversion()[0] >= 6:
     ctypes.windll.user32.SetProcessDPIAware()
-	
-#FUNCIONS
-
-def crear_cadro(posicion,color=[0,0,0]):
-	return cadro(punto(posicion[0],posicion[1]),pygame.Rect(posicion[0] * ANCHO_CADRO, posicion[1] * ALTO_CADRO, ANCHO_CADRO, ALTO_CADRO),color)
-	
-def crear_cadro_en_lista(posicion,color=[0,0,0]):
-	p = posicion[0] + NUMERO_CADROS_ANCHO_XOGO * posicion[1]
-	LISTA_CADROS[p] = cadro(punto(posicion[0],posicion[1]),pygame.Rect(posicion[0] * ANCHO_CADRO, posicion[1] * ALTO_CADRO, ANCHO_CADRO, ALTO_CADRO),color)
-	
-def borrar_cadro_en_lista(posicion):
-	p = posicion[0] + NUMERO_CADROS_ANCHO_XOGO * posicion[1]
-	LISTA_CADROS[p] = 0
-	
-def crear_cadro_redores(pos,color=[0,0,0],borrar=False):
-	lista_salida = []
-	lista_puntos = []
-	lista_pos = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,0],[0,1],[1,-1],[1,0],[1,1]]
-	if pos.x in range(0,NUMERO_CADROS_TOTALES_XOGO,NUMERO_CADROS_ANCHO_XOGO):
-		lista_pos.remove([-1,-1])
-		lista_pos.remove([-1,0])
-		lista_pos.remove([-1,1])
-	if pos.x in range(NUMERO_CADROS_ANCHO_XOGO-1,NUMERO_CADROS_TOTALES_XOGO,NUMERO_CADROS_ANCHO_XOGO):
-		lista_pos.remove([1,-1])
-		lista_pos.remove([1,0])
-		lista_pos.remove([1,1])
-	if pos.y in range(0,NUMERO_CADROS_TOTALES_XOGO,NUMERO_CADROS_ALTO_XOGO):
-		if [-1,-1] in lista_pos:
-			lista_pos.remove([-1,-1])
-		lista_pos.remove([0,-1])
-		if [1,-1] in lista_pos:
-			lista_pos.remove([1,-1])
-	if pos.y in range(NUMERO_CADROS_ALTO_XOGO-1,NUMERO_CADROS_TOTALES_XOGO,NUMERO_CADROS_ALTO_XOGO):
-		if [-1,1] in lista_pos:
-			lista_pos.remove([-1,1])
-		lista_pos.remove([0,1])
-		if [1,1] in lista_pos:
-			lista_pos.remove([1,1])
-	for i in lista_pos:
-		lista_puntos.append(punto(i[0],i[1]))
-	for i in lista_puntos:
-		if not borrar:
-			cadro = crear_cadro(pos+i,color)
-		else:
-			cadro = crear_cadro(pos+i,[0,0,0,0])
-		lista_salida.append(cadro)
-	return lista_salida
-
-def colision_pj_cadros_f(pj_punto,lista_cadros):
-	colision_pj_cadro(pj_punto,lista_cadros,ANCHO_PJ,ALTO_PJ,MARCO_VENTANA_LATERAL,MARCO_VENTANA_VERTICAL)
 
 #CREAR SURFACE COS CADROS
 
@@ -100,6 +50,15 @@ mostrar_puntos = False
 
 pincel_gordo = False
 
+pj_mira = "abaixo"
+
+lista_cadros_superiores_pj = []
+lista_cadros_inferiores_pj = []
+lista_cadros_dereita_pj = []
+lista_cadros_esquerda_pj = []
+
+lista_cadros_cercanos = lista_cadros_superiores_pj + lista_cadros_inferiores_pj + lista_cadros_esquerda_pj + lista_cadros_dereita_pj
+
 #INICIAR PYGAME
 
 pygame.init()
@@ -110,17 +69,35 @@ ventana = pygame.display.set_mode([ANCHO_VENTANA, ALTO_VENTANA])
 
 pygame.display.set_caption("Conceptos_2")
 
-#IMAGENES
+#CARGA DE IMAXES
 
 #PJ
 
-if os.access("abaixo0.png",0):
-	imagen_pj = pygame.image.load("abaixo0.png").convert_alpha()
+if (os.access("sprites/pj/abaixo0.png",0) and os.access("sprites/pj/arriba0.png",0) 
+	and os.access("sprites/pj/dereita0.png",0) and os.access("sprites/pj/esquerda0.png",0)):
+	imagen_abaixo0 = pygame.image.load("sprites/pj/abaixo0.png").convert_alpha()
+	imagen_arriba0 = pygame.image.load("sprites/pj/arriba0.png").convert_alpha()
+	imagen_dereita0 = pygame.image.load("sprites/pj/dereita0.png").convert_alpha()
+	imagen_esquerda0 = pygame.image.load("sprites/pj/esquerda0.png").convert_alpha()
+	imagen_pj = True
 else:
-	image_pj = False
-	
-#imagen_pj = pygame.transform.smoothscale(imagen_pj,(int(ANCHO_PJ*1.2),int(ALTO_PJ*1.2)))
-imagen_pj = pygame.transform.scale(imagen_pj,(int(ANCHO_PJ*1.5),int(ALTO_PJ*1.5)))
+	imagen_pj = False
+
+if imagen_pj:
+	imagen_abaixo0 = pygame.transform.scale(imagen_abaixo0,(int(ANCHO_PJ),int(ALTO_PJ*2)))
+	imagen_arriba0 = pygame.transform.scale(imagen_arriba0,(int(ANCHO_PJ),int(ALTO_PJ*2)))
+	imagen_dereita0 = pygame.transform.scale(imagen_dereita0,(int(ANCHO_PJ),int(ALTO_PJ*2)))
+	imagen_esquerda0 = pygame.transform.scale(imagen_esquerda0,(int(ANCHO_PJ),int(ALTO_PJ*2)))
+
+if imagen_pj:
+	if pj_mira == "abaixo":
+		imagen_pj = imagen_abaixo0
+	elif pj_mira == "arriba":
+		imagen_pj = imagen_arriba0
+	elif pj_mira == "dereita":
+		imagen_pj = imagen_dereita0
+	elif pj_mira == "esquerda":
+		imagen_pj = imagen_esquerda0
 
 #FONT
 
@@ -137,6 +114,8 @@ while ON:
 
 	ventana.fill((255,255,255))
 
+	#DEBUXADO #############################################################################
+	
 	#DEBUXAR LIMITES
 	
 	limite_superior = pygame.Rect(MARCO_VENTANA_LATERAL-punto_camara.x,MARCO_VENTANA_VERTICAL-punto_camara.y,ANCHO_XOGO,ALTO_CADRO*2)
@@ -170,15 +149,28 @@ while ON:
 	
 	#DEBUXAR PJ
 	
-	if punto_pj:
-		if cadricula:
-			pj_rect = pygame.Rect(pj.punto_ventana.x,pj.punto_ventana.y,ANCHO_PJ,ALTO_PJ)
-			pygame.draw.rect(ventana,[255,0,0],pj_rect)
-		ventana.blit(imagen_pj,(pj.punto_ventana.x-(imagen_pj.get_width()-ANCHO_PJ)/2,pj.punto_ventana.y-(imagen_pj.get_height()-ALTO_PJ)/2))
-		#ventana.blit(imagen_pj,(pj.punto_ventana.x,pj.punto_ventana.y))
+	if imagen_pj:
+		if pj_mira == "abaixo":
+			imagen_pj = imagen_abaixo0
+		elif pj_mira == "arriba":
+			imagen_pj = imagen_arriba0
+		elif pj_mira == "dereita":
+			imagen_pj = imagen_dereita0
+		elif pj_mira == "esquerda":
+			imagen_pj = imagen_esquerda0
+
+	if imagen_pj:
+		#pj_rect = pygame.Rect(pj.punto_ventana.x,pj.punto_ventana.y,ANCHO_PJ,ALTO_PJ)
+		#pygame.draw.rect(ventana,[255,0,255],pj_rect)
+		ventana.blit(imagen_pj,(pj.punto_ventana.x-(imagen_pj.get_width()-ANCHO_PJ+1)/2,pj.punto_ventana.y-imagen_pj.get_height()/2))
 	else:
 		pj_rect = pygame.Rect(pj.punto_ventana.x,pj.punto_ventana.y,ANCHO_PJ,ALTO_PJ)
 		pygame.draw.rect(ventana,[0,0,0],pj_rect)
+		
+	if cadricula:
+		for i in lista_cadros_cercanos:
+			rect_inf = pygame.Rect(i.rect.left-(punto_camara.x-MARCO_VENTANA_LATERAL),i.rect.top-(punto_camara.y-MARCO_VENTANA_VERTICAL),ANCHO_CADRO,ALTO_CADRO)
+			pygame.draw.rect(ventana,[255,0,0],rect_inf,2)
 	
 	#DEBUXAR CUADRICULA
 	
@@ -207,34 +199,7 @@ while ON:
 	ventana.blit(marco_vertical,(0,0))
 	ventana.blit(marco_vertical,(0,ALTO_VENTANA-MARCO_VENTANA_VERTICAL))
 	
-	#DEBUXAR CADROS CHOQUES
-	
-	'''
-	lista_indices_superiores = []
-	
-	puntos_indices = pos_superiores(pj.punto)
-	
-	'''
-	'''
-	for i in puntos_indices:
-		rect_choque = pygame.Rect(i.x*ANCHO_CADRO+MARCO_VENTANA_LATERAL-punto_camara.x,i.y*ALTO_CADRO+MARCO_VENTANA_VERTICAL-punto_camara.y,ANCHO_CADRO,ALTO_CADRO)
-		pygame.draw.rect(ventana,[255,0,0],rect_choque,1)
-	'''
-	'''
-	
-	for i in puntos_indices:
-		indice_superior = posicion_a_indice(i)
-		if LISTA_CADROS[indice_superior]:
-			lista_indices_superiores.append(indice_superior)
-	
-	for i in lista_indices_superiores:
-		rect = pygame.Rect(LISTA_CADROS[i].rect.left+MARCO_VENTANA_LATERAL-punto_camara.x, LISTA_CADROS[i].rect.top+MARCO_VENTANA_VERTICAL-punto_camara.y,ANCHO_CADRO,ALTO_CADRO)
-		pygame.draw.rect(ventana,[255,0,0],rect,1)
-		
-	dist_cadro_superior = distancia_bloque_superior(pj.punto,lista_indices_superiores)
-	'''
-	
-	#MOVEMENTO DE PJ-PUNTO
+	#MOVEMENTO DE PJ-PUNTO #############################################################################
 	
 	lista_mov = []
 	
@@ -265,6 +230,9 @@ while ON:
 		lista_mov.remove("dereita")
 		lista_mov.remove("esquerda")
 		
+	if len(lista_mov) > 0:
+		pj_mira = lista_mov[0]
+		
 	#MOVEMENTO CON VECTOR
 	
 	vector_pj = vector(pj.punto.x,pj.punto.y)
@@ -282,27 +250,26 @@ while ON:
 	
 	lista_cadros_superiores_pj = []
 	lista_cadros_inferiores_pj = []
-	lista_cadros_esquerda_pj = []
 	lista_cadros_dereita_pj = []
+	lista_cadros_esquerda_pj = []
 	
 	if "arriba" in lista_mov:
-		lista_cadros_superiores_pj =  lista_cadros_superiores(pj.punto,MARCO_VENTANA_LATERAL,MARCO_VENTANA_VERTICAL,ANCHO_CADRO,ALTO_CADRO,ANCHO_PJ,NUMERO_CADROS_ANCHO_XOGO,LISTA_CADROS)
+		lista_cadros_superiores_pj =  lista_cadros_superiores(pj.punto)
+	if "abaixo" in lista_mov:
+		lista_cadros_inferiores_pj = lista_cadros_inferiores(pj.punto)
+	if "dereita" in lista_mov:
+		lista_cadros_dereita_pj =  lista_cadros_dereita(pj.punto)
+	if "esquerda" in lista_mov:
+		lista_cadros_esquerda_pj =  lista_cadros_esquerda(pj.punto)
 	
 	lista_cadros_cercanos = lista_cadros_superiores_pj + lista_cadros_inferiores_pj + lista_cadros_esquerda_pj + lista_cadros_dereita_pj
 	
-	cont_recta_vel = 0
+	if colision_pj_cadro(pj_punto_futuro,lista_cadros_cercanos):
+		if colision_pj_cadro(punto(pj_punto_futuro.x,pj.punto.y),lista_cadros_cercanos):
+			pj_punto_futuro.x = pj.punto.x
+		if colision_pj_cadro(punto(pj.punto.x,pj_punto_futuro.y),lista_cadros_cercanos):
+			pj_punto_futuro.y = pj.punto.y
 		
-	while colision_pj_cadro(pj_punto_futuro,lista_cadros_cercanos,ANCHO_PJ,ALTO_PJ,MARCO_VENTANA_LATERAL,MARCO_VENTANA_VERTICAL):
-		cont_recta_vel += 1
-		if cont_recta_vel >= VELOCIDADE_PJ:
-			pj_punto_futuro = pj.punto
-			break
-		elif len(lista_mov) > 1:
-			vector_final = vector_pj + vector_dir * (VELOCIDADE_PJ-cont_recta_vel) / vector_dir.longitude()
-			pj_punto_futuro = punto(vector_final.x,vector_final.y)
-		else:
-			vector_final = vector_pj + vector_dir * (VELOCIDADE_PJ-cont_recta_vel) / vector_dir.longitude()
-			pj_punto_futuro = punto(vector_final.x,vector_final.y)
 		
 	pj.punto = punto(pj_punto_futuro.x,pj_punto_futuro.y)
 
@@ -313,12 +280,12 @@ while ON:
 	pj.punto.y = min(ALTO_XOGO-(ALTO_PJ+MARCO_VENTANA_VERTICAL),pj.punto.y)
 	pj.punto.y = max(MARCO_VENTANA_VERTICAL,pj.punto.y)
 		
-	#MOVEMENTO DE PUNTO-CAMARA
+	#MOVEMENTO DO PUNTO-CAMARA
 	
 	punto_camara.y = pj.punto.y - ALTO_VENTANA/2+ALTO_PJ/2
 	punto_camara.x = pj.punto.x - ANCHO_VENTANA/2+ANCHO_PJ/2
 
-	#REAXUSTE DO PUNTO
+	#REAXUSTE DO PUNTO-CAMARA
 	
 	punto_camara.x = min(ANCHO_XOGO-ANCHO_VENTANA,punto_camara.x)
 	punto_camara.x = max(0,punto_camara.x)
@@ -336,22 +303,15 @@ while ON:
 	punto_camara_ref.y = max(MARCO_VENTANA_VERTICAL,punto_camara_ref.y)
 	
 	#MOVEMENTO DE PUNTO-VENTANA
+
+	pj.punto_ventana.y = pj.punto.y - punto_camara.y
+	pj.punto_ventana.x = pj.punto.x - punto_camara.x
 	
-	if punto_camara.y == 0 or punto_camara.y == ALTO_XOGO - ALTO_VENTANA:
-		pj.punto_ventana.y = pj.punto.y - punto_camara.y
-	else:
-		pj.punto_ventana.y = ALTO_VENTANA/2-ALTO_PJ/2
-		
-	if punto_camara.x == 0 or punto_camara.x == ANCHO_XOGO - ANCHO_VENTANA:
-		pj.punto_ventana.x = pj.punto.x - punto_camara.x
-	else:
-		pj.punto_ventana.x = ANCHO_VENTANA/2-ANCHO_PJ/2
-		
 	#ACTUALIZAR PANTALLA
 	
 	pygame.display.update()
 	
-	#MOUSE
+	#MOUSE #############################################################################
 	
 	pos_mouse = pygame.mouse.get_pos()
 	
