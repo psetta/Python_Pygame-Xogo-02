@@ -13,10 +13,12 @@ import sys
 
 if os.name == 'nt' and sys.getwindowsversion()[0] >= 6:
     ctypes.windll.user32.SetProcessDPIAware()
+	
+lista_proyectiles = []
 
 #CREAR SURFACE COS CADROS
 
-superficie_cadros = pygame.Surface((ANCHO_XOGO_REAL,ALTO_XOGO_REAL), pygame.SRCALPHA)
+superficie_cadros = pygame.Surface((ANCHO_XOGO_REAL,ALTO_XOGO_REAL), pygame.SRCALPHA|pygame.HWSURFACE)
 
 #FUNCION DEBUXAR CADROS EN SURFACE
 
@@ -246,6 +248,7 @@ while ON:
 		vector_final = vector_pj + vector_dir * VELOCIDADE_PJ / vector_dir.longitude()
 		pj_punto_futuro = punto(vector_final.x,vector_final.y)
 		
+		
 	#COLISIONS PJ - BLOQUES
 	
 	lista_cadros_superiores_pj = []
@@ -314,6 +317,7 @@ while ON:
 	#MOUSE #############################################################################
 	
 	pos_mouse = pygame.mouse.get_pos()
+	vector_mouse = vector(pos_mouse[0],pos_mouse[1])
 	
 		#CREACION DE CADROS
 		
@@ -348,6 +352,7 @@ while ON:
 
 	for e in pygame.event.get():
 		if e.type == pygame.KEYDOWN:
+		
 		#PONHER-QUITAR CADRICULA
 			if e.key == pygame.K_c:
 				if cadricula:
